@@ -1,0 +1,9 @@
+*/.ipynb_checkpoints/*
+*/__pycache__/
+.ipynb_checkpoints/*
+__pycache__/
+__marimo__/
+.DS_Store
+*/*.asv
+*/data/*
+data/*
