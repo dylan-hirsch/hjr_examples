@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.13.6"
+__generated_with = "0.20.4"
 app = marimo.App(width="medium")
 
 
@@ -25,7 +25,7 @@ def _():
     np.random.seed(123)
 
     plt.rcParams["text.usetex"] = True
-    plt.rcParams["mathtext.fontset"] = "cm"
+    #plt.rcParams["mathtext.fontset"] = "cm"
     font = {"size": 15}
     plt.rc("font", **font)
     return dynamics, hj, jnp, mo, np, ode, plt
@@ -47,7 +47,9 @@ def _(dynamics, hj, jnp):
 
 @app.cell
 def _(mo):
-    mo.md(r"""## Get value function for staying above therapeutic threshold""")
+    mo.md(r"""
+    ## Get value function for staying above therapeutic threshold
+    """)
     return
 
 
@@ -61,10 +63,8 @@ def _(grid, hj, jnp, np):
         ]
     )
 
-
     def value_postprocessor_inner(t, v, g=g0):
         return jnp.maximum(v, g)
-
 
     solver_settings0 = hj.SolverSettings.with_accuracy(
         "very_high", value_postprocessor=value_postprocessor_inner
@@ -84,7 +84,9 @@ def _(g0, grid, hj, model, np, solver_settings0):
 
 @app.cell
 def _(mo):
-    mo.md(r"""## Get value function for compositional task""")
+    mo.md(r"""
+    ## Get value function for compositional task
+    """)
     return
 
 
@@ -93,10 +95,8 @@ def _(V0, grid, hj, jnp, model, np, times):
     l = V0[-1, ...]
     g = np.maximum(-0.8 + grid.states[..., 1], -0.8 + grid.states[..., 2])
 
-
     def value_postprocessor(t, v, l=l, g=g):
         return jnp.maximum(jnp.minimum(v, l), g)
-
 
     solver_settings = hj.SolverSettings.with_accuracy(
         "very_high", value_postprocessor=value_postprocessor
@@ -119,7 +119,6 @@ def _(N, V, V0, delta, gamma, grid, model, np, ode, points_per_day):
 
         return dx
 
-
     T = []
     Y = []
     us = []
@@ -138,7 +137,7 @@ def _(N, V, V0, delta, gamma, grid, model, np, ode, points_per_day):
         T.append(sol.t)
         Y.append(sol.y)
         us.append(u)
-        if x0[0] > .5:
+        if x0[0] > 0.5:
             break
     j = 0
     while i + j < 2 * N - 1:
@@ -157,11 +156,8 @@ def _(N, V, V0, delta, gamma, grid, model, np, ode, points_per_day):
         us.append(u)
         j += 1
 
-
     t_sol = np.concatenate([t if i == 0 else t[1:] for i, t in enumerate(T)])
-    y_sol = np.concatenate(
-        [y if i == 0 else y[:, 1:] for i, y in enumerate(Y)], axis=1
-    )
+    y_sol = np.concatenate([y if i == 0 else y[:, 1:] for i, y in enumerate(Y)], axis=1)
     return t_sol, us, y_sol
 
 

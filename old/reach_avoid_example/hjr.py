@@ -48,14 +48,11 @@ def _(dynamics, hj, jnp, np):
     g2 = 2 - np.linalg.norm(grid.states[..., [0]] - np.array([+5.0]), axis=-1)
     g3 = 2.5 - np.linalg.norm(grid.states[..., [1]] - np.array([2.5]), axis=-1)
 
-
     l = np.minimum(np.maximum(l1, l2), 5.0)
     g = np.maximum(np.minimum(g1, g3), np.minimum(g2, g3))
 
-
     def value_postprocessor(t, v, l=l, g=g):
         return jnp.maximum(jnp.minimum(v, l), g)
-
 
     solver_settings = hj.SolverSettings.with_accuracy(
         "very_high", value_postprocessor=value_postprocessor
@@ -86,13 +83,11 @@ def _(FFMpegWriter, FuncAnimation, V0, plt):
     ax.set_ylabel("Y")
     ax.set_title("2D Tensor Over Time")
 
-
     # Update function for animation
     def update(frame):
         im.set_data(V0[frame])
         ax.set_title(f"Time step {frame + 1}/{n_time}")
         return [im]
-
 
     # Create animation
     ani = FuncAnimation(fig, update, frames=n_time, blit=True, interval=100)
@@ -135,7 +130,6 @@ def _(V0, np, plt):
     Array2 = np.ndarray
     Array1 = np.ndarray
 
-
     def _ensure_time_axis(
         A: Optional[Union[Array3, Array2]], nt: int
     ) -> Optional[Array3]:
@@ -147,7 +141,6 @@ def _(V0, np, plt):
         if A.ndim == 3:
             return A
         raise ValueError("Array must be 2D (nx, ny) or 3D (nt, nx, ny).")
-
 
     def animate_value_surface(
         V: Array3,
@@ -312,7 +305,6 @@ def _(V0, np, plt):
             plt.show()
 
         return anim
-
 
     # Example synthetic grid and data (replace with your arrays)
     nt, nx, ny = V0.shape

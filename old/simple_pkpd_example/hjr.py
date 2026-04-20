@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.13.6"
+__generated_with = "0.20.4"
 app = marimo.App(width="medium")
 
 
@@ -83,9 +83,14 @@ def _(N, V, grid, model, np, ode, points_per_day):
     Y = []
     us = []
     x0 = np.array([0.0, 0.0, 0.0])
-    for i in range(N):
-        grad_value = grid.interpolate(grid.grad_values(V[-1 - i, ...]), state=x0)
-        u = model.optimal_control(x0, 0, grad_value)[0]
+    for i in range(2 * N):
+        if i < N:
+            grad_value = grid.interpolate(
+                grid.grad_values(V[-1 - i, ...]), state=x0
+            )
+            u = model.optimal_control(x0, 0, grad_value)[0]
+        else:
+            u = 0
 
         sol = ode.solve_ivp(
             lambda t, x: dx(x, u),
@@ -111,43 +116,48 @@ def _(N, np, plt, points_per_day, t0, t_sol, us, y_sol):
 
     colors = ["blue", "magenta", "purple"]
 
-    ax = axs[0]
-    ax.plot(t_sol, y_sol[0, :], color=colors[0])
+    ax = axs[2]
+    ax.set_xlabel("Day")
+    ax.plot(t_sol * 7 / abs(t0), y_sol[0, :], color=colors[0])
     ax.set_ylabel("[X]\n(Normalized)")
     ax.set_ylim([-0.05, 1.05])
-    ax.set_xlim(0, abs(t0))
+    ax.set_xlim(0, 14)
     ax.hlines(
         y=0.5,
         xmin=0,
-        xmax=max(t_sol),
+        xmax=max(t_sol) * 7 / abs(t0),
         color="green",
         linestyles="dashed",
         label="Therapeutic",
     )
-    ax.legend(ncol=2)
+    # ax.legend(ncol=2)
+    ax.set_xticks([0, 2, 4, 6, 8, 10, 12, 14])
+    ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
 
     ax = axs[1]
-    ax.plot(t_sol, y_sol[1, :], color=colors[1], label="Blood")
-    ax.plot(t_sol, y_sol[2, :], color=colors[2], label="Tissue")
+    ax.plot(t_sol * 7 / abs(t0), y_sol[1, :], color=colors[1], label="Blood")
+    ax.plot(t_sol * 7 / abs(t0), y_sol[2, :], color=colors[2], label="Tissue")
     ax.set_ylabel("[Drug]\n(Normalized)")
-    ax.set_ylim([-0.05, 1.55])
-    ax.set_xlim(0, abs(t0))
+    ax.set_ylim([-0.05, 1.05])
+    ax.set_xlim(0, 14)
     ax.hlines(
         y=0.8,
         xmin=0,
-        xmax=max(t_sol),
+        xmax=max(t_sol) * 7 / abs(t0),
         color="red",
         linestyles="dashed",
         label="Toxic",
     )
-    ax.legend(ncol=3)
+    # ax.legend(ncol=3)
+    ax.set_xticks([0, 2, 4, 6, 8, 10, 12, 14])
+    ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
 
-    ax = axs[2]
-    ax.set_xlabel("Day")
-    ax.plot(np.array(range(N)) / points_per_day, us, 'black')
+    ax = axs[0]
+    ax.plot(np.array(range(2 * N)) / points_per_day * 7 / abs(t0), us, "black")
     ax.set_ylim([-0.05, 1.05])
-    ax.set_xlim(0, abs(t0))
+    ax.set_xlim(0, 14)
     ax.set_ylabel("Dose \n(Normalized)")
+    ax.set_xticks([0, 2, 4, 6, 8, 10, 12, 14])
 
     plt.tight_layout()
     plt.savefig("/Users/dylanhirsch/Desktop/dose.svg", transparent=True)
@@ -156,65 +166,69 @@ def _(N, np, plt, points_per_day, t0, t_sol, us, y_sol):
 
 
 @app.cell
-def _(N, dx, np, ode, plt, points_per_day, t0):
+def _(dx, np, ode, plt, t0):
     def _():
         fig, axs = plt.subplots(3, 1, figsize=(6, 6))
 
         colors = ["blue", "magenta", "purple"]
 
         x0 = np.array([0, 0, 0])
-        u = 0.64
+        u = 0.635
         sol = ode.solve_ivp(
-            lambda t, x: dx(x, u),
-            [0, abs(t0)],
+            lambda t, x: dx(x, u if t < abs(t0) else 0),
+            [0, 2 * abs(t0)],
             x0,
             max_step=0.01,
         )
-        t_sol = sol.t
+        t_sol = sol.t * 7 / abs(t0)
         y_sol = sol.y
 
-        ax = axs[0]
+        ax = axs[2]
+        ax.set_xlabel("Day")
         ax.plot(t_sol, y_sol[0, :], color=colors[0])
         ax.set_ylabel("[X]\n(Normalized)")
         ax.set_ylim([-0.05, 1.05])
-        ax.set_xlim(0, abs(t0))
+        ax.set_xlim(0, 14)
         ax.hlines(
             y=0.5,
             xmin=0,
-            xmax=max(t_sol),
+            xmax=14,
             color="green",
             linestyles="dashed",
             label="Therapeutic",
         )
-        ax.legend(ncol=2)
+        ax.set_xticks([0, 2, 4, 6, 8, 10, 12, 14])
+        ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
 
         ax = axs[1]
         ax.plot(t_sol, y_sol[1, :], color=colors[1], label="Blood")
         ax.plot(t_sol, y_sol[2, :], color=colors[2], label="Tissue")
         ax.set_ylabel("[Drug]\n(Normalized)")
-        ax.set_ylim([-0.05, 1.55])
-        ax.set_xlim(0, abs(t0))
+        ax.set_ylim([-0.05, 1.05])
+        ax.set_xlim(0, 14)
         ax.hlines(
             y=0.8,
             xmin=0,
-            xmax=max(t_sol),
+            xmax=14,
             color="red",
             linestyles="dashed",
             label="Toxic",
         )
-        ax.legend(ncol=3)
+        ax.set_xticks([0, 2, 4, 6, 8, 10, 12, 14])
+        ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
 
-        ax = axs[2]
-        ax.set_xlabel("Day")
-        ax.plot(np.array(range(N)) / points_per_day, u * np.ones(N), 'black')
+        ax = axs[0]
+        ax.plot(
+            sol.t * 7 / abs(t0), [u if t < abs(t0) else 0 for t in sol.t], "black"
+        )
         ax.set_ylim([-0.05, 1.05])
-        ax.set_xlim(0, abs(t0))
+        ax.set_xlim(0, 14)
+        ax.set_xticks([0, 2, 4, 6, 8, 10, 12, 14])
         ax.set_ylabel("Dose \n(Normalized)")
 
         plt.tight_layout()
         plt.savefig("/Users/dylanhirsch/Desktop/bad_1.svg", transparent=True)
         plt.show()
-
 
 
     _()
@@ -230,51 +244,54 @@ def _(N, dx, np, ode, plt, points_per_day, t0):
 
         x0 = np.array([0, 0, 0])
         sol = ode.solve_ivp(
-            lambda t, x: dx(x, 1 if t > 5.2 else 0),
-            [0, abs(t0)],
+            lambda t, x: dx(x, 1 if t < 2.65 else 0),
+            [0, 2 * abs(t0)],
             x0,
             max_step=0.01,
         )
         t_sol = sol.t
         y_sol = sol.y
 
-        ax = axs[0]
-        ax.plot(t_sol, y_sol[0, :], color=colors[0])
+        ax = axs[2]
+        ax.set_xlabel("Day")
+        ax.plot(t_sol * 7 / abs(t0), y_sol[0, :], color=colors[0])
         ax.set_ylabel("[X]\n(Normalized)")
         ax.set_ylim([-0.05, 1.05])
-        ax.set_xlim(0, abs(t0))
+        ax.set_xlim(0, 14)
+        ax.set_xticks([0, 2, 4, 6, 8, 10, 12, 14])
         ax.hlines(
             y=0.5,
             xmin=0,
-            xmax=max(t_sol),
+            xmax=14,
             color="green",
             linestyles="dashed",
             label="Therapeutic",
         )
-        ax.legend(ncol=2)
+        ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
 
         ax = axs[1]
-        ax.plot(t_sol, y_sol[1, :], color=colors[1], label="Blood")
-        ax.plot(t_sol, y_sol[2, :], color=colors[2], label="Tissue")
+        ax.plot(t_sol * 7 / abs(t0), y_sol[1, :], color=colors[1], label="Blood")
+        ax.plot(t_sol * 7 / abs(t0), y_sol[2, :], color=colors[2], label="Tissue")
         ax.set_ylabel("[Drug]\n(Normalized)")
-        ax.set_ylim([-0.05, 1.55])
-        ax.set_xlim(0, abs(t0))
+        ax.set_ylim([-0.05, 1.05])
+        ax.set_xlim(0, 14)
+        ax.set_xticks([0, 2, 4, 6, 8, 10, 12, 14])
         ax.hlines(
             y=0.8,
             xmin=0,
-            xmax=max(t_sol),
+            xmax=15,
             color="red",
             linestyles="dashed",
             label="Toxic",
         )
-        ax.legend(ncol=3)
+        ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
 
-        ax = axs[2]
-        ax.set_xlabel("Day")
-        ts = np.array(range(N)) / points_per_day
-        ax.plot(ts, [1 if t > 5.2 else 0 for t in ts], 'black')
+        ax = axs[0]
+        ts = np.array(range(2 * N)) / points_per_day
+        ax.plot(ts * 7 / abs(t0), [1 if t < 2.65 else 0 for t in ts], "black")
         ax.set_ylim([-0.05, 1.05])
-        ax.set_xlim(0, abs(t0))
+        ax.set_xlim(0, 14)
+        ax.set_xticks([0, 2, 4, 6, 8, 10, 12, 14])
         ax.set_ylabel("Dose \n(Normalized)")
 
         plt.tight_layout()
@@ -303,39 +320,42 @@ def _(N, dx, np, ode, plt, points_per_day, t0):
         t_sol = sol.t
         y_sol = sol.y
 
-        ax = axs[0]
+        ax = axs[2]
+        ax.set_xlabel("Day")
         ax.set_ylabel("[X]\n(Normalized)")
         ax.set_ylim([-0.05, 1.05])
-        ax.set_xlim(0, abs(t0))
+        ax.set_xlim(0, 14)
+        ax.set_xticks([0, 2, 4, 6, 8, 10, 12, 14])
         ax.hlines(
             y=0.5,
             xmin=0,
-            xmax=max(t_sol),
+            xmax=14,
             color="green",
             linestyles="dashed",
             label="Therapeutic",
         )
-        ax.legend(ncol=2)
+        ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
 
         ax = axs[1]
         ax.set_ylabel("[Drug]\n(Normalized)")
-        ax.set_ylim([-0.05, 1.55])
-        ax.set_xlim(0, abs(t0))
+        ax.set_ylim([-0.05, 1.05])
+        ax.set_xlim(0, 14)
+        ax.set_xticks([0, 2, 4, 6, 8, 10, 12, 14])
         ax.hlines(
             y=0.8,
             xmin=0,
-            xmax=max(t_sol),
+            xmax=14,
             color="red",
             linestyles="dashed",
             label="Toxic",
         )
-        ax.legend(ncol=3)
+        ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
 
-        ax = axs[2]
-        ax.set_xlabel("Day")
+        ax = axs[0]
         ts = np.array(range(N)) / points_per_day
         ax.set_ylim([-0.05, 1.05])
-        ax.set_xlim(0, abs(t0))
+        ax.set_xlim(0, 14)
+        ax.set_xticks([0, 2, 4, 6, 8, 10, 12, 14])
         ax.set_ylabel("Dose \n(Normalized)")
 
         plt.tight_layout()

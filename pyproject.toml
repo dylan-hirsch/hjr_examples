@@ -1,0 +1,20 @@
+[project]
+name = "hjr-examples"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "anthropic>=0.96.0",
+    "hj-reachability>=0.7.0",
+    "ipython>=9.12.0",
+    "marimo>=0.20.4",
+    "matplotlib>=3.10.8",
+    "numpy>=2.3.5",
+    "plotly>=6.7.0",
+    "pydantic-ai-slim>=1.84.1",
+    "ruff>=0.15.5",
+    "scipy>=1.17.1",
+    "tqdm>=4.67.3",
+]
+

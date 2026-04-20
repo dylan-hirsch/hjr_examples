@@ -53,10 +53,7 @@ def _(dynamics, hj, jnp, np):
         periodic_dims=[2],
     )
 
-    l = (
-        np.linalg.norm(grid.states[..., [0, 1]] - np.array([0.0, 0.0]), axis=-1)
-        - 1
-    )
+    l = np.linalg.norm(grid.states[..., [0, 1]] - np.array([0.0, 0.0]), axis=-1) - 1
 
     solver_settings = hj.SolverSettings.with_accuracy("very_high")
     return grid, l, model, solver_settings
@@ -89,9 +86,7 @@ def _(
     fig.set_tight_layout(True)
 
     colors = ["cyan", "white", "pink"]
-    cmap = LinearSegmentedColormap.from_list(
-        "custom_blue_black_white", colors, N=256
-    )
+    cmap = LinearSegmentedColormap.from_list("custom_blue_black_white", colors, N=256)
     vmin = np.min(V)
     vmax = np.max(V)
     norm = TwoSlopeNorm(vmin=-1, vcenter=0, vmax=vmax)
@@ -107,13 +102,10 @@ def _(
         V[0], levels=[0], colors="black", linewidths=0.7, origin="lower"
     )
 
-
     # Update function for animation
     def update(frame):
         ax.clear()
-        im = ax.imshow(
-            V[frame], cmap=cmap, origin="lower", norm=norm, aspect="auto"
-        )
+        im = ax.imshow(V[frame], cmap=cmap, origin="lower", norm=norm, aspect="auto")
         new_contour = ax.contour(
             V[frame], levels=[0], colors="black", linewidths=0.7, origin="lower"
         )
@@ -122,7 +114,6 @@ def _(
         ax.set_ylabel(r"$x_2$")
 
         return [im, new_contour]
-
 
     # Create animation
     ani = FuncAnimation(fig, update, frames=n_time, blit=True, interval=100)
