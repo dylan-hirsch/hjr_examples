@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.13.6"
+__generated_with = "0.20.4"
 app = marimo.App(width="medium")
 
 
@@ -13,7 +13,7 @@ def _():
 
     from IPython.display import HTML
     import matplotlib.animation as anim
-    from matplotlib.animation import FuncAnimation, FFMpegWriter
+    from matplotlib.animation import FuncAnimation, FFMpegWriter, PillowWriter
     import matplotlib.pyplot as plt
     import plotly.graph_objects as go
     import dynamics
@@ -29,7 +29,7 @@ def _():
     plt.rcParams["mathtext.fontset"] = "cm"
     font = {"size": 15}
     plt.rc("font", **font)
-    return FFMpegWriter, FuncAnimation, dynamics, hj, jnp, np, plt
+    return FuncAnimation, PillowWriter, dynamics, hj, jnp, np, plt
 
 
 @app.cell
@@ -42,17 +42,19 @@ def _(dynamics, hj, jnp, np):
         periodic_dims=None,
     )
 
-    l1 = np.linalg.norm(grid.states[..., [0]] - np.array([0.0]), axis=-1) - 1
-    l2 = 5 * np.linalg.norm(grid.states[..., [1]] - np.array([1.0]), axis=-1) - 1
-    g1 = 2 - np.linalg.norm(grid.states[..., [0]] - np.array([-5.0]), axis=-1)
-    g2 = 2 - np.linalg.norm(grid.states[..., [0]] - np.array([+5.0]), axis=-1)
-    g3 = 2.5 - np.linalg.norm(grid.states[..., [1]] - np.array([2.5]), axis=-1)
+    l1 = 1 - np.linalg.norm(grid.states[..., [0]] - np.array([0.0]), axis=-1)
+    l2 = 1 - 5 * np.linalg.norm(grid.states[..., [1]] - np.array([1.0]), axis=-1)
+    g1 = np.linalg.norm(grid.states[..., [0]] - np.array([-5.0]), axis=-1) - 2
+    g2 = np.linalg.norm(grid.states[..., [0]] - np.array([+5.0]), axis=-1) - 2
+    g3 = np.linalg.norm(grid.states[..., [1]] - np.array([2.5]), axis=-1) - 2.5
 
-    l = np.minimum(np.maximum(l1, l2), 5.0)
-    g = np.maximum(np.minimum(g1, g3), np.minimum(g2, g3))
+    l = np.maximum(np.minimum(l1, l2), -5.0)
+    g = np.minimum(np.maximum(g1, g3), np.maximum(g2, g3))
+
 
     def value_postprocessor(t, v, l=l, g=g):
-        return jnp.maximum(jnp.minimum(v, l), g)
+        return jnp.minimum(jnp.maximum(v, l), g)
+
 
     solver_settings = hj.SolverSettings.with_accuracy(
         "very_high", value_postprocessor=value_postprocessor
@@ -64,12 +66,13 @@ def _(dynamics, hj, jnp, np):
 def _(g, grid, hj, l, model, np, solver_settings):
     t0 = -10
     times = np.linspace(0.0, t0, 20)
-    V0 = hj.solve(solver_settings, model, grid, times, np.maximum(l, g))
+    V0 = hj.solve(solver_settings, model, grid, times, np.minimum(l, g))
     return (V0,)
 
 
 @app.cell
-def _(FFMpegWriter, FuncAnimation, V0, plt):
+def _():
+    """
     # Example 3D tensor: shape (n_time, n_rows, n_cols)
     n_time, n_rows, n_cols = V0.shape
 
@@ -101,11 +104,12 @@ def _(FFMpegWriter, FuncAnimation, V0, plt):
     ani.save("/Users/dylanhirsch/Desktop/tensor_evolution.mp4", writer=writer)
 
     plt.show()
+    """
     return
 
 
 @app.cell
-def _(V0, np, plt):
+def _(FuncAnimation, PillowWriter, V0, np, plt):
     #!/usr/bin/env python3
     """
     Animate a time-varying value function V(t, x, y) as a 3D surface, with
@@ -122,13 +126,13 @@ def _(V0, np, plt):
     - Optionally set `save="movie.mp4"` or `"movie.gif"` to export.
     """
 
-    from matplotlib.animation import FuncAnimation, PillowWriter
     from mpl_toolkits.mplot3d import Axes3D  # noqa: F401  (needed for 3D)
     from typing import Optional, Tuple, Union
 
     Array3 = np.ndarray
     Array2 = np.ndarray
     Array1 = np.ndarray
+
 
     def _ensure_time_axis(
         A: Optional[Union[Array3, Array2]], nt: int
@@ -141,6 +145,7 @@ def _(V0, np, plt):
         if A.ndim == 3:
             return A
         raise ValueError("Array must be 2D (nx, ny) or 3D (nt, nx, ny).")
+
 
     def animate_value_surface(
         V: Array3,
@@ -306,6 +311,7 @@ def _(V0, np, plt):
 
         return anim
 
+
     # Example synthetic grid and data (replace with your arrays)
     nt, nx, ny = V0.shape
     x = np.linspace(-10.0, 10.0, nx)
@@ -313,13 +319,14 @@ def _(V0, np, plt):
     X, Y = np.meshgrid(x, y, indexing="ij")
 
     # Example double obstacle: lower/upper surfaces (static here)
-    lower_obstacle = np.maximum(
-        np.minimum(2 - np.abs(X - 5), 2.5 - np.abs(Y - 2.5)),
-        np.minimum(2 - np.abs(X + 5), 2.5 - np.abs(Y - 2.5)),
+    lower_obstacle = np.minimum(
+        np.maximum(np.abs(X - 5) - 2, np.abs(Y - 2.5) - 2.5),
+        np.maximum(np.abs(X + 5) - 2, np.abs(Y - 2.5) - 2.5),
     )  # red
-    target_surface = np.minimum(
-        np.maximum(np.abs(X) - 1, 5 * np.abs(Y - 1) - 1.0), 5.0
-    )  # green
+    target_surface = np.maximum(
+        np.minimum(1 - np.abs(X), 1 - 5 * np.abs(Y - 1)), -5.0
+    )
+    # green
 
     # ======== Call the animator ========
     animation = animate_value_surface(
@@ -338,7 +345,7 @@ def _(V0, np, plt):
 
     writer = PillowWriter(fps=20)
     animation.save("/Users/dylanhirsch/Desktop/test.gif", writer=writer)
-    return (FuncAnimation,)
+    return
 
 
 if __name__ == "__main__":

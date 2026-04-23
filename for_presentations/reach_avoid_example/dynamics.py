@@ -8,8 +8,8 @@ from hj_reachability import sets
 class model(dynamics.ControlAndDisturbanceAffineDynamics):
     def __init__(
         self,
-        control_mode="min",
-        disturbance_mode="max",
+        control_mode="max",
+        disturbance_mode="min",
         control_space=None,
         disturbance_space=None,
         uMax=1.0,
