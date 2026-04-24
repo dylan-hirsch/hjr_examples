@@ -43,7 +43,7 @@ def _(dubins_car, hj, np):
     theta_voxels = 100
     t_voxels = 200
 
-    # Specify bounds
+    # Specify PDE grid corners
     x_min = -10
     y_min = -10
     theta_min = -10
@@ -53,12 +53,11 @@ def _(dubins_car, hj, np):
     theta_max = +10
 
     # discretize state-space and the time to solve the HJ Partial Differential Equation
-    # don't change
     grid = hj.Grid.from_lattice_parameters_and_boundary_conditions(
         hj.sets.Box([x_min, y_min, theta_min], [x_max, y_max, theta_max]),
         [x_voxels + 1, y_voxels + 1, theta_voxels + 1],
     )
-    times = np.linspace(0.0, -T, t_voxels + 1)  # don't change
+    times = np.linspace(0.0, -T, t_voxels + 1)
 
     # specify the goal
     l = (
@@ -74,12 +73,6 @@ def _(dubins_car, hj, np):
     # solve for the value function
     V = hj.solve(solver_settings, model, grid, times, l)
     return T, V, grid, l, model, times
-
-
-@app.cell
-def _(V):
-    V.shape
-    return
 
 
 @app.cell
