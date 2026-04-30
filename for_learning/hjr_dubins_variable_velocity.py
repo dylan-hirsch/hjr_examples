@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.18.4"
+__generated_with = "0.20.4"
 app = marimo.App(width="medium")
 
 
@@ -38,8 +38,8 @@ def _(dubins_car, hj, np):
     T = 10
 
     # specify the number of voxels to divide the spatial and temporal axes
-    x_voxels = 101
-    t_voxels = 101
+    x_voxels = 50
+    t_voxels = 100
 
     # discretize state-space and the time to solve the HJ Partial Differential Equation
     grid = hj.Grid.from_lattice_parameters_and_boundary_conditions(
@@ -139,6 +139,11 @@ def _(T, cl, l, np, plt):
 
     plt.tight_layout()
     plt.show()
+    return
+
+
+@app.cell
+def _():
     return
 
 
