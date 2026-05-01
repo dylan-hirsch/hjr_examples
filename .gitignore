@@ -1,9 +1,37 @@
-*/.ipynb_checkpoints/*
-*/__pycache__/
-.ipynb_checkpoints/*
+# Python-generated files
+build/
+dist/
+wheels/
 __pycache__/
-__marimo__/
+*.py[oc]
+*.egg-info
+
+# Folders to ignore
+data/
+figures/
+scratch/
+weights/
+
+# Common files to ignore
+*.asv
+*.pkl
+*.swp
 .DS_Store
-*/*.asv
-*/data/*
-data/*
+
+# Virtual environments
+.venv
+.conda-env/
+.conda-pkgs/
+
+# Notebooks
+.ipynb_checkpoints/
+__marimo__/
+
+# Images
+*.png
+*.pdf
+*.svg
+*.jpeg
+
+# AI
+*.claude
