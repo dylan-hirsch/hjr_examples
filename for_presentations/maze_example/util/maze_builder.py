@@ -33,13 +33,29 @@ class Wall:
         sdf = np.sqrt(np.maximum(qx, 0.0 * qx)**2 + np.maximum(qy, 0.0 * qy)**2) + np.minimum(np.maximum(qx, qy), 0.0 * qx)
         return sdf
 
+class Goal:
+
+    def __init__(self, x0: float, y0: float, r = .25):
+        self.x0 = x0
+        self.y0 = y0
+        self.r = r
+
+    def __call__(self, grid):
+        
+        X = grid.states[...,0]
+        Y = grid.states[...,1]
+
+        sdf = -np.sqrt((X - self.x0)**2 + (Y - self.y0)**2) + self.r
+        return sdf
+
 class Maze:
 
     def __init__(self):
 
         self.walls = []
+        self.goals = []
 
-    def __call__(self, grid):
+    def obstacle_sdf(self, grid):
 
         sdf = np.inf * np.ones(grid.shape[:-1])
         for wall in self.walls:
@@ -47,10 +63,39 @@ class Maze:
 
         return sdf
 
+    def target_sdf(self, grid):
+        sdf = -np.inf * np.ones(grid.shape[:-1])
+        for goal in self.goals:
+            sdf = np.maximum(sdf, goal(grid))
 
-    def add(self, wall):
+        return sdf
+
+    def add_wall(self, wall):
         self.walls.append(wall)
 
+    def add_goal(self, goal):
+        self.goals.append(goal)
+
+
+class Smaze(Maze):
+
+    def __init__(self):
+
+        super().__init__()
+        # Outer boundary
+        self.add_wall(Wall(-10, -10, 10, -9.5))
+        self.add_wall(Wall(-10, 9.5, 10, 10))
+        self.add_wall(Wall(-10, -10, -9.5, 10))
+        self.add_wall(Wall(9.5, -10, 10, 10))
+
+        for h in range(-9,9):
+            if h % 2 == 0:
+                if (h / 2) % 2 == 0:
+                    self.add_wall(Wall(-9.5,h-.5,8.5,h+.5))
+                else:
+                    self.add_wall(Wall(-8.5,h-.5,9.5,h+.5))
+
+        self.add_goal(Goal(-9.25, -9.25, .25))
 
 
 if __name__ == '__main__':
@@ -59,7 +104,6 @@ if __name__ == '__main__':
     # specify the number of voxels to divide the spatial and temporal axes
     x_voxels = res
     y_voxels = res
-    t_voxels = 2 * res
 
     # Specify PDE grid corners
     x_min = -10
@@ -74,13 +118,12 @@ if __name__ == '__main__':
         [x_voxels + 1, y_voxels + 1],
     )
 
-    maze = Maze()
-    wall = Wall(-9., -9., -8., 0.)
-    maze.add(wall)
-    value = maze(grid)
+    # initiate maze
+    maze = Smaze()
+    value = maze.obstacle_sdf(grid)
+
 
     # Plot
-
     x = grid.states[:, 0, 0]
     y = grid.states[0, :, 1]
     X, Y = np.meshgrid(x, y)
@@ -108,4 +151,4 @@ if __name__ == '__main__':
         Y, X, value, levels=[0.0], colors="black", linestyles="--", linewidths=2
     )
 
-    fig.savefig('/Users/dylanhirsch/Desktop/hi.png')
+    fig.savefig('/Users/dylanhirsch/Desktop/smaze.png')
